@@ -1645,22 +1645,18 @@ static void DrawQuiz(int sw, int sh) {
 
 static void DrawTitle(int sw, int sh) {
     DrawRectangle(0, 0, sw, sh, Fade(Hex(0x241b33), 0.45f));
-    int w = std::min(640, sw - 60), x = sw / 2 - w / 2, y = sh / 2 - 270;
-    DrawRectangle(x, y, w, 540, Fade(Hex(0x1f1730), 0.92f));
+    int w = std::min(640, sw - 60), x = sw / 2 - w / 2, y = sh / 2 - 205;
+    DrawRectangle(x, y, w, 410, Fade(Hex(0x1f1730), 0.92f));
     DrawRectangle(x, y, w, 10, C_PINK);
     DrawText("CORAL BAY", x + 36, y + 36, 64, C_PINK);
     DrawText("1986", x + 36 + MeasureText("CORAL BAY", 64) + 16, y + 66, 28, C_TEAL);
-    DrawText("Nico Salazar, 31", x + 36, y + 118, 30, WHITE);
-    DrawText("An ex-middleweight who threw one fight too many.", x + 36, y + 162, 20, Hex(0xe8dcf0));
-    DrawText("Back after six years away, and Marco Vidal", x + 36, y + 188, 20, Hex(0xe8dcf0));
-    DrawText("wants his money. Expect a call.", x + 36, y + 214, 20, Hex(0xe8dcf0));
     const char* rows[] = {"WASD  move / drive        Mouse  look", "Shift  sprint",
                           "F  get in, get out, carjack    Enter  talk (AWS AI quiz)", "Space  handbrake   H  horn   R  radio",
                           "Tab  see what every pedestrian is thinking", "G  switch fancy / simple graphics", "Esc  pause"};
-    for (int i = 0; i < 7; i++) DrawText(rows[i], x + 36, y + 262 + i * 26, 18, Hex(0xb9f0dc));
+    for (int i = 0; i < 7; i++) DrawText(rows[i], x + 36, y + 130 + i * 26, 18, Hex(0xb9f0dc));
     const char* models = gCharModels.empty() ? "Block models (add models to assets/ for full 3D)" : TextFormat("%d character and %d car models loaded", (int)gCharModels.size(), (int)gCarModels.size());
-    DrawText(models, x + 36, y + 452, 16, Fade(WHITE, 0.6f));
-    if (std::fmod(GetTime(), 1.0) < 0.6) DrawText("Press ENTER to hit the streets", x + 36, y + 488, 24, C_GOLD);
+    DrawText(models, x + 36, y + 320, 16, Fade(WHITE, 0.6f));
+    if (std::fmod(GetTime(), 1.0) < 0.6) DrawText("Press ENTER to hit the streets", x + 36, y + 356, 24, C_GOLD);
 }
 
 // ---------------------------------------------------------------- main
