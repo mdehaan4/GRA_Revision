@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coral Bay</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1a1224; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+  #status {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #ff5fa2; font: 600 22px/1.4 system-ui, sans-serif; text-align: center; pointer-events: none;
+  }
+  #hint {
+    position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%);
+    color: #b9f0dc; opacity: .6; font: 13px system-ui, sans-serif; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+<div id="status">Loading Coral Bay…</div>
+<div id="hint">Click the game to capture the mouse and start sound. Keyboard and mouse required.</div>
+<script>
+  var statusEl = document.getElementById('status');
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    print: function (t) { console.log(t); },
+    printErr: function (t) { console.error(t); },
+    setStatus: function (t) { statusEl.textContent = t; statusEl.style.display = t ? 'flex' : 'none'; },
+    onRuntimeInitialized: function () { Module.setStatus(''); document.getElementById('canvas').focus(); }
+  };
+  window.addEventListener('keydown', function (e) {
+    // keep arrow keys, space and Tab inside the game instead of scrolling or changing focus
+    if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) >= 0) e.preventDefault();
+  });
+  window.onerror = function () { Module.setStatus('Something went wrong. Coral Bay needs a browser with WebGL 2 (recent Chrome, Edge, Firefox or Safari).'); };
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

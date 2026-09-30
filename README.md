@@ -4,6 +4,10 @@ A small Vice City-style 3D game in C++17 with raylib. You play Nico Salazar, an
 ex-boxer back in a neon beach city in 1986, with a loan shark called Marco on
 your back.
 
+## Play in your browser
+
+https://mdehaan4.github.io/GRA_Revision/ (needs WebGL 2 and a keyboard and mouse). Every push to `main` rebuilds it through `.github/workflows/web.yml`.
+
 ## Build
 
 You need CMake 3.16+, a C++17 compiler and git. raylib is downloaded automatically.

@@ -1,0 +1,43 @@
+# Builds Coral Bay for the browser (WebAssembly + WebGL 2) and publishes it to
+# the gh-pages branch, which GitHub Pages serves.
+name: Deploy web build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build raylib 5.5 for the web
+        run: |
+          git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git raylib
+          make -C raylib/src PLATFORM=PLATFORM_WEB GRAPHICS=GRAPHICS_API_OPENGL_ES3 -j4
+
+      - name: Build Coral Bay
+        run: |
+          mkdir -p public
+          em++ src/main.cpp -o public/index.html -std=c++17 -Os -Wall -Wno-missing-braces \
+            -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES3 -Iraylib/src raylib/src/libraylib.a \
+            -sUSE_GLFW=3 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sFULL_ES3=1 \
+            -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=1mb --shell-file web/shell.html
+          touch public/.nojekyll
+          ls -la public
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
