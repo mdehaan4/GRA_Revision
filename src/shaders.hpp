@@ -1,4 +1,4 @@
-// Shaders for Coral Bay (GLSL 330, desktop OpenGL 3.3)
+// Shaders for Coral Bay (GLSL 330 on desktop OpenGL 3.3, GLSL ES 300 on WebGL 2)
 //
 //  LIGHT   sunset sun + sky light, flat shading, soft shadows, distance fog.
 //          Emissive surfaces (neon) skip lighting and mark themselves in the
@@ -8,8 +8,13 @@
 //  COMPOSITE adds the glow back with a soft tone map and vignette.
 #pragma once
 
-static const char* LIGHT_VS = R"(#version 330
-in vec3 vertexPosition;
+#if defined(PLATFORM_WEB)
+#define GLSL_HEADER "#version 300 es\nprecision highp float;\n"
+#else
+#define GLSL_HEADER "#version 330\n"
+#endif
+
+static const char* LIGHT_VS = GLSL_HEADER R"(in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec4 vertexColor;
 uniform mat4 mvp;
@@ -25,8 +30,7 @@ void main() {
 }
 )";
 
-static const char* LIGHT_FS = R"(#version 330
-in vec3 fragPos;
+static const char* LIGHT_FS = GLSL_HEADER R"(in vec3 fragPos;
 in vec2 fragTexCoord;
 in vec4 fragColor;
 uniform sampler2D texture0;
@@ -83,8 +87,7 @@ void main() {
 }
 )";
 
-static const char* DEPTH_FS = R"(#version 330
-in vec3 fragPos;
+static const char* DEPTH_FS = GLSL_HEADER R"(in vec3 fragPos;
 in vec2 fragTexCoord;
 in vec4 fragColor;
 out vec4 finalColor;
@@ -96,8 +99,7 @@ void main() {
 }
 )";
 
-static const char* EXTRACT_FS = R"(#version 330
-in vec2 fragTexCoord;
+static const char* EXTRACT_FS = GLSL_HEADER R"(in vec2 fragTexCoord;
 in vec4 fragColor;
 uniform sampler2D texture0;
 out vec4 finalColor;
@@ -108,8 +110,7 @@ void main() {
 }
 )";
 
-static const char* BLUR_FS = R"(#version 330
-in vec2 fragTexCoord;
+static const char* BLUR_FS = GLSL_HEADER R"(in vec2 fragTexCoord;
 in vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec2 dir;
@@ -126,8 +127,7 @@ void main() {
 }
 )";
 
-static const char* COMPOSITE_FS = R"(#version 330
-in vec2 fragTexCoord;
+static const char* COMPOSITE_FS = GLSL_HEADER R"(in vec2 fragTexCoord;
 in vec4 fragColor;
 uniform sampler2D texture0;
 uniform sampler2D glowTex;

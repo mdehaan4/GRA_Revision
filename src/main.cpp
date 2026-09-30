@@ -17,6 +17,9 @@
 //   Esc pause
 
 #include "raylib.h"
+#if defined(PLATFORM_WEB)
+#include <emscripten/emscripten.h>
+#endif
 #include "raymath.h"
 #include "rlgl.h"
 
@@ -1661,6 +1664,62 @@ static void DrawTitle(int sw, int sh) {
 }
 
 // ---------------------------------------------------------------- main
+// One frame of the game. The browser build calls this from its animation loop.
+static void Frame() {
+    float dt = std::min(GetFrameTime(), 0.05f);
+    if (gToastT > 0) gToastT -= dt;
+    if (gStarFlash > 0) gStarFlash -= dt;
+    if (IsKeyPressed(KEY_G) && gFXok) gFX = !gFX;
+
+    switch (gMode) {
+        case Mode::Title:
+            gTime += dt;
+            for (auto& c : gCars) if (c.ai) UpdateTraffic(c, dt);
+            for (size_t i = 0; i < gPeds.size(); i++) UpdatePed(gPeds[i], dt);
+            if (IsKeyPressed(KEY_ENTER)) { gMode = Mode::Play; DisableCursor(); gCamYaw = PI * 1.5f; }
+            break;
+        case Mode::Play:
+            UpdatePlay(dt);
+            if (IsKeyPressed(KEY_ESCAPE)) { gMode = Mode::Pause; EnableCursor(); }
+            break;
+        case Mode::Pause:
+            gSynth.engine = 0;
+            if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) { gMode = Mode::Play; DisableCursor(); }
+            break;
+        case Mode::Quiz:
+            gSynth.engine = 0;
+            UpdateQuiz();
+            break;
+        case Mode::Busted:
+            gTime += dt;
+            gBustT -= dt;
+            if (gBustT <= 0) { Respawn(); gMode = Mode::Play; }
+            break;
+    }
+    gSynth.Update();
+
+    Camera3D cam = MakeCamera(dt, gMode == Mode::Title);
+    int sw = GetScreenWidth(), sh = GetScreenHeight();
+    if (gFX) { EnsureTargets(sw, sh); RenderSceneFX(cam); }
+    BeginDrawing();
+    if (gFX) CompositeFX(); else RenderScenePlain(cam, sw, sh);
+    if (gMode == Mode::Title) DrawTitle(sw, sh);
+    else {
+        DrawHUD(cam);
+        if (gMode == Mode::Pause) {
+            DrawRectangle(0, 0, sw, sh, Fade(Hex(0x241b33), 0.6f));
+            Centered("Paused", sw / 2, sh / 2 - 50, 60, C_PINK);
+            Centered("Click or press Esc to resume. Close the window to quit.", sw / 2, sh / 2 + 24, 20, WHITE);
+        }
+        if (gMode == Mode::Quiz) DrawQuiz(sw, sh);
+        if (gMode == Mode::Busted) {
+            DrawRectangle(0, 0, sw, sh, Fade(Hex(0x241b33), 0.35f));
+            Centered("BUSTED", sw / 2, sh / 2 - 60, 110, C_PINK);
+        }
+    }
+    EndDrawing();
+}
+
 int main() {
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(1280, 720, "Coral Bay");
@@ -1672,60 +1731,11 @@ int main() {
     InitGraphics();
     BuildRadar();
 
-    while (!WindowShouldClose()) {
-        float dt = std::min(GetFrameTime(), 0.05f);
-        if (gToastT > 0) gToastT -= dt;
-        if (gStarFlash > 0) gStarFlash -= dt;
-        if (IsKeyPressed(KEY_G) && gFXok) gFX = !gFX;
-
-        switch (gMode) {
-            case Mode::Title:
-                gTime += dt;
-                for (auto& c : gCars) if (c.ai) UpdateTraffic(c, dt);
-                for (size_t i = 0; i < gPeds.size(); i++) UpdatePed(gPeds[i], dt);
-                if (IsKeyPressed(KEY_ENTER)) { gMode = Mode::Play; DisableCursor(); gCamYaw = PI * 1.5f; }
-                break;
-            case Mode::Play:
-                UpdatePlay(dt);
-                if (IsKeyPressed(KEY_ESCAPE)) { gMode = Mode::Pause; EnableCursor(); }
-                break;
-            case Mode::Pause:
-                gSynth.engine = 0;
-                if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) { gMode = Mode::Play; DisableCursor(); }
-                break;
-            case Mode::Quiz:
-                gSynth.engine = 0;
-                UpdateQuiz();
-                break;
-            case Mode::Busted:
-                gTime += dt;
-                gBustT -= dt;
-                if (gBustT <= 0) { Respawn(); gMode = Mode::Play; }
-                break;
-        }
-        gSynth.Update();
-
-        Camera3D cam = MakeCamera(dt, gMode == Mode::Title);
-        int sw = GetScreenWidth(), sh = GetScreenHeight();
-        if (gFX) { EnsureTargets(sw, sh); RenderSceneFX(cam); }
-        BeginDrawing();
-        if (gFX) CompositeFX(); else RenderScenePlain(cam, sw, sh);
-        if (gMode == Mode::Title) DrawTitle(sw, sh);
-        else {
-            DrawHUD(cam);
-            if (gMode == Mode::Pause) {
-                DrawRectangle(0, 0, sw, sh, Fade(Hex(0x241b33), 0.6f));
-                Centered("Paused", sw / 2, sh / 2 - 50, 60, C_PINK);
-                Centered("Click or press Esc to resume. Close the window to quit.", sw / 2, sh / 2 + 24, 20, WHITE);
-            }
-            if (gMode == Mode::Quiz) DrawQuiz(sw, sh);
-            if (gMode == Mode::Busted) {
-                DrawRectangle(0, 0, sw, sh, Fade(Hex(0x241b33), 0.35f));
-                Centered("BUSTED", sw / 2, sh / 2 - 60, 110, C_PINK);
-            }
-        }
-        EndDrawing();
-    }
+#if defined(PLATFORM_WEB)
+    emscripten_set_main_loop(Frame, 0, 1);   // never returns
+#else
+    while (!WindowShouldClose()) Frame();
+#endif
     UnloadTexture(gRadarTex);
     SetAllModelShaders(gDefShader);
     mStatic.materials[0].shader = gDefShader;
