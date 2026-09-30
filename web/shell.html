@@ -23,18 +23,23 @@
 <div id="hint">Click the game to capture the mouse and start sound. Keyboard and mouse required.</div>
 <script>
   var statusEl = document.getElementById('status');
+  var started = false;
+  var FAIL = 'Something went wrong. Coral Bay needs a browser with WebGL 2 (recent Chrome, Edge, Firefox or Safari).';
   var Module = {
     canvas: document.getElementById('canvas'),
     print: function (t) { console.log(t); },
     printErr: function (t) { console.error(t); },
     setStatus: function (t) { statusEl.textContent = t; statusEl.style.display = t ? 'flex' : 'none'; },
-    onRuntimeInitialized: function () { Module.setStatus(''); document.getElementById('canvas').focus(); }
+    onRuntimeInitialized: function () { started = true; Module.setStatus(''); document.getElementById('canvas').focus(); },
+    onAbort: function () { Module.setStatus(FAIL); }
   };
   window.addEventListener('keydown', function (e) {
     // keep arrow keys, space and Tab inside the game instead of scrolling or changing focus
     if (['Space', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(e.code) >= 0) e.preventDefault();
   });
-  window.onerror = function () { Module.setStatus('Something went wrong. Coral Bay needs a browser with WebGL 2 (recent Chrome, Edge, Firefox or Safari).'); };
+  // Only a failure to load is fatal. Once the game runs, stray browser errors
+  // (pointer lock, audio) are harmless, so they go to the console instead.
+  window.onerror = function (msg) { if (!started) Module.setStatus(FAIL); else console.warn(msg); };
 </script>
 {{{ SCRIPT }}}
 </body>
